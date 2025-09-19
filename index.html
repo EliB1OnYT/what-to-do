@@ -87,14 +87,16 @@
 
     if (localStorage.getItem('currentUser')) openApp();
 
-    // --- SERVICE WORKER REGISTRATION ---
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/pwabuilder.sw.js')
-          .then(reg => console.log('Service worker registered!', reg))
-          .catch(err => console.log('SW registration failed', err));
-      });
-    }
-  </script>
+<script>
+  // --- SERVICE WORKER REGISTRATION ---
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/pwabuilder-sw.js')
+        .then(reg => console.log('Service worker registered!', reg))
+        .catch(err => console.log('SW registration failed', err));
+    });
+  }
+</script>
 </body>
 </html>
+
