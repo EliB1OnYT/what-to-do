@@ -17,5 +17,11 @@
       "sizes": "512x512",
       "type": "image/png"
     }
+  ],
+  "categories": [
+    "personalization",
+    "productivity",
+    "utilities"
   ]
 }
+"orientation": "portrait"
