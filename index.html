@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>What Todo?</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', sans-serif;
+    }
+    body {
+      background: linear-gradient(135deg, #ffffff, #f0f2f8);
+      color: #222;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .container {
+      background: #fff;
+      width: 100%;
+      max-width: 500px;
+      border-radius: 20px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+      padding: 30px;
+    }
+    h1 {
+      text-align: center;
+      font-size: 1.8rem;
+      margin-bottom: 20px;
+      color: #333;
+    }
+    input, select {
+      width: 100%;
+      padding: 12px;
+      margin: 10px 0;
+      border-radius: 10px;
+      border: 1px solid #ccc;
+      outline: none;
+      transition: border 0.3s;
+      font-size: 0.95rem;
+    }
+    input:focus, select:focus {
+      border-color: #4c8bf5;
+    }
+    button {
+      width: 100%;
+      padding: 12px;
+      background: #4c8bf5;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 1rem;
+      margin-top: 10px;
+      transition: background 0.3s;
+    }
+    button:hover {
+      background: #3a73d9;
+    }
+    .switch-link {
+      margin-top: 15px;
+      display: block;
+      text-align: center;
+      color: #4c8bf5;
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+    #app {
+      display: none;
+    }
+    #todoForm {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 15px;
+    }
+    #todoForm input[type="text"] {
+      grid-column: span 2;
+    }
+    #filters {
+      display: flex;
+      gap: 10px;
+      margin: 15px 0;
+      flex-wrap: wrap;
+    }
+    #filters select {
+      flex: 1;
+    }
+    ul {
+      list-style: none;
+      margin-top: 15px;
+    }
+    li {
+      display: grid;
+      grid-template-columns: 30px 1fr auto auto;
+      align-items: center;
+      gap: 10px;
+      padding: 12px;
+      background: #f9fafc;
+      border: 1px solid #eee;
+      border-radius: 10px;
+      margin-bottom: 10px;
+    }
+    li.completed span {
+      text-decoration: line-through;
+      opacity: 0.6;
+    }
+    li small {
+      display: block;
+      color: #666;
+      font-size: 0.75rem;
+    }
+    .priority-high { color: #e74c3c; font-weight: bold; }
+    .priority-medium { color: #f39c12; font-weight: bold; }
+    .priority-low { color: #2ecc71; font-weight: bold; }
+    .action-btn {
+      padding: 6px 10px;
+      margin-left: 5px;
+      font-size: 0.8rem;
+      border-radius: 6px;
+    }
+    .delete-btn { background: #e74c3c; }
+    .edit-btn { background: #f1c40f; color: #222; }
+    .clear-btn { background: #555; margin-top: 20px; }
+    @media (max-width: 500px) {
+      #todoForm {
+        grid-template-columns: 1fr;
+      }
+      .container {
+        padding: 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- AUTH -->
+    <div id="auth">
+      <h1>What Todo?</h1>
+      <input id="username" type="text" placeholder="Username" />
+      <input id="password" type="password" placeholder="Password" />
+      <button onclick="signup()">Sign Up</button>
+      <button onclick="login()">Log In</button>
+      <span class="switch-link" onclick="toggleMode()">Switch to Log In</span>
+    </div>
+
+    <!-- APP -->
+    <div id="app">
+      <h1>Your Tasks</h1>
+
+      <form id="todoForm" onsubmit="addTodo(event)">
+        <input id="todoInput" type="text" placeholder="Task name..." />
+        <select id="category">
+          <option value="Work">Work</option>
+          <option value="Personal">Personal</option>
+          <option value="Shopping">Shopping</option>
+        </select>
+        <select id="priority">
+          <option value="Low">Low</option>
+          <option value="Medium">Medium</option>
+          <option value="High">High</option>
+        </select>
+        <input id="dueDate" type="date" />
+        <button type="submit" style="grid-column: span 2;">Add Task</button>
+      </form>
+
+      <div id="filters">
+        <select id="filterCategory" onchange="renderTodos()">
+          <option value="">All Categories</option>
+          <option>Work</option>
+          <option>Personal</option>
+          <option>Shopping</option>
+        </select>
+        <select id="filterPriority" onchange="renderTodos()">
+          <option value="">All Priorities</option>
+          <option>Low</option>
+          <option>Medium</option>
+          <option>High</option>
+        </select>
+        <select id="filterStatus" onchange="renderTodos()">
+          <option value="">All Status</option>
+          <option value="pending">Pending</option>
+          <option value="done">Completed</option>
+        </select>
+      </div>
+
+      <ul id="todoList"></ul>
+      <button class="clear-btn" onclick="clearAll()">Clear All</button>
+      <button onclick="logout()" style="background:#333;margin-top:10px;">Log Out</button>
+    </div>
+  </div>
+
+  <script>
+    let mode = 'signup';
+    function toggleMode() {
+      mode = mode === 'signup' ? 'login' : 'signup';
+      document.querySelector('.switch-link').textContent =
+        mode === 'signup' ? 'Switch to Log In' : 'Switch to Sign Up';
+      document.querySelector('#auth button:first-of-type').style.display =
+        mode === 'signup' ? 'block' : 'none';
+    }
+
+    function signup() {
+      if (mode !== 'signup') return;
+      const user = username.value.trim(), pass = password.value.trim();
+      if (!user || !pass) return alert('Fill all fields');
+      localStorage.setItem(`user_${user}`, pass);
+      alert('Account created. Log in now!');
+      toggleMode();
+    }
+
+    function login() {
+      if (mode !== 'login') return;
+      const user = username.value.trim(), pass = password.value.trim();
+      const saved = localStorage.getItem(`user_${user}`);
+      if (saved === pass) {
+        localStorage.setItem('currentUser', user);
+        openApp();
+      } else alert('Invalid credentials');
+    }
+
+    function openApp() {
+      auth.style.display = 'none';
+      app.style.display = 'block';
+      renderTodos();
+    }
+
+    function logout() {
+      localStorage.removeItem('currentUser');
+      location.reload();
+    }
+
+    function getTodos() {
+      const u = localStorage.getItem('currentUser');
+      return JSON.parse(localStorage.getItem(`todos_${u}`) || '[]');
+    }
+
+    function saveTodos(arr) {
+      const u = localStorage.getItem('currentUser');
+      localStorage.setItem(`todos_${u}`, JSON.stringify(arr));
+    }
+
+    function addTodo(e) {
+      e.preventDefault();
+      const text = todoInput.value.trim();
+      const cat = category.value;
+      const pri = priority.value;
+      const due = dueDate.value;
+      if (!text) return;
+      const todos = getTodos();
+      todos.push({ text, category: cat, priority: pri, due, done: false });
+      saveTodos(todos);
+      todoInput.value = '';
+      renderTodos();
+    }
+
+    function toggleDone(i) {
+      const todos = getTodos();
+      todos[i].done = !todos[i].done;
+      saveTodos(todos);
+      renderTodos();
+    }
+
+    function editTask(i) {
+      const todos = getTodos();
+      const t = todos[i];
+      const newText = prompt("Edit task:", t.text);
+      if (newText) {
+        t.text = newText;
+        saveTodos(todos);
+        renderTodos();
+      }
+    }
+
+    function deleteTask(i) {
+      const todos = getTodos();
+      todos.splice(i, 1);
+      saveTodos(todos);
+      renderTodos();
+    }
+
+    function clearAll() {
+      if (confirm("Delete all tasks?")) {
+        saveTodos([]);
+        renderTodos();
+      }
+    }
+
+    function renderTodos() {
+      const list = document.getElementById('todoList');
+      list.innerHTML = '';
+      const todos = getTodos();
+      const fCat = filterCategory.value;
+      const fPri = filterPriority.value;
+      const fStat = filterStatus.value;
+      todos.forEach((t, i) => {
+        if (fCat && t.category !== fCat) return;
+        if (fPri && t.priority !== fPri) return;
+        if (fStat === 'done' && !t.done) return;
+        if (fStat === 'pending' && t.done) return;
+
+        const li = document.createElement('li');
+        li.className = t.done ? 'completed' : '';
+        li.innerHTML = `
+          <input type="checkbox" ${t.done?'checked':''} onclick="toggleDone(${i})">
+          <span>${t.text}
+            <small>${t.category} | <span class="priority-${t.priority.toLowerCase()}">${t.priority}</span> | ${t.due || 'No date'}</small>
+          </span>
+          <button class="action-btn edit-btn" onclick="editTask(${i})">Edit</button>
+          <button class="action-btn delete-btn" onclick="deleteTask(${i})">Del</button>
+        `;
+        list.appendChild(li);
+      });
+    }
+
+    if (localStorage.getItem('currentUser')) openApp();
+  </script>
+</body>
+</html>
